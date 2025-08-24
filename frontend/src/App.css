@@ -1,0 +1,36 @@
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+}
+
+.main-content {
+  flex: 1;
+  padding-top: 85px; /* Exact navbar height - no gap */
+  width: 100%;
+  min-height: calc(100vh - 85px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 15px;
+    width: 100%;
+  }
+  
+  .main-content {
+    padding-top: 85px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 10px;
+    width: 100%;
+  }
+}

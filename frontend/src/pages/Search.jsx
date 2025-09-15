@@ -11,38 +11,7 @@ const Search = () => {
     furnished: ''
   })
 
-  const [apartments] = useState([
-    {
-      id: 1,
-      title: "Modern 2BR Apartment",
-      location: "Downtown",
-      price: 1200,
-      bedrooms: 2,
-      bathrooms: 2,
-      furnished: true,
-      image: "https://via.placeholder.com/300x200?text=Apartment+1"
-    },
-    {
-      id: 2,
-      title: "Cozy 1BR Studio",
-      location: "City Center",
-      price: 800,
-      bedrooms: 1,
-      bathrooms: 1,
-      furnished: false,
-      image: "https://via.placeholder.com/300x200?text=Apartment+2"
-    },
-    {
-      id: 3,
-      title: "Luxury 3BR Penthouse",
-      location: "Uptown",
-      price: 2500,
-      bedrooms: 3,
-      bathrooms: 3,
-      furnished: true,
-      image: "https://via.placeholder.com/300x200?text=Apartment+3"
-    }
-  ])
+  const [apartments, setApartments] = useState([])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target

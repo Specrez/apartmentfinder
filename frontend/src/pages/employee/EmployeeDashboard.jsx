@@ -14,69 +14,8 @@ const EmployeeDashboard = () => {
     buildingAddress: "789 Sunset Blvd, Downtown"
   }
 
-  // Sample apartment units data
-  const [apartments] = useState([
-    {
-      id: 1,
-      unitNumber: "101",
-      title: "Modern 2BR Downtown Unit",
-      type: "2BR/2BA",
-      size: 850,
-      rent: 1200,
-      deposit: 2400,
-      bedrooms: "2",
-      bathrooms: "2",
-      availableDate: "2024-10-01",
-      petPolicy: "Cats allowed",
-      parking: "1 assigned space",
-      status: "occupied",
-      tenant: "John Doe",
-      leaseEnd: "2025-12-31",
-      features: ["Hardwood Floors", "Air Conditioning", "Dishwasher", "Balcony"],
-      description: "Beautiful modern 2-bedroom unit with city views and premium finishes.",
-      images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=300&h=200&fit=crop"]
-    },
-    {
-      id: 2,
-      unitNumber: "102",
-      title: "Cozy 1BR Garden View",
-      type: "1BR/1BA",
-      size: 600,
-      rent: 900,
-      deposit: 1800,
-      bedrooms: "1",
-      bathrooms: "1",
-      availableDate: "2024-09-15",
-      petPolicy: "No pets",
-      parking: "Street parking",
-      status: "available",
-      tenant: null,
-      leaseEnd: null,
-      features: ["Garden View", "Carpet", "Heating", "Storage"],
-      description: "Comfortable 1-bedroom unit with peaceful garden views.",
-      images: []
-    },
-    {
-      id: 3,
-      unitNumber: "201",
-      title: "Spacious 3BR Family Unit",
-      type: "3BR/2BA",
-      size: 1100,
-      rent: 1500,
-      deposit: 3000,
-      bedrooms: "3",
-      bathrooms: "2",
-      availableDate: "2024-11-01",
-      petPolicy: "Dogs allowed",
-      parking: "2 assigned spaces",
-      status: "occupied",
-      tenant: "Jane Smith",
-      leaseEnd: "2026-06-30",
-      features: ["High Ceilings", "Walk-in Closet", "Washer/Dryer", "Fireplace"],
-      description: "Large family unit perfect for those needing extra space.",
-      images: ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=300&h=200&fit=crop"]
-    }
-  ])
+  // Sample apartment units data - Will be fetched from backend
+  const [apartments, setApartments] = useState([])
 
   const [showAddUnitForm, setShowAddUnitForm] = useState(false)
   const [editingUnit, setEditingUnit] = useState(null)

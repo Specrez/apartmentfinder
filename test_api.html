@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Buildings API</title>
+</head>
+<body>
+    <h1>Testing Buildings API</h1>
+    <button onclick="testAPI()">Test Buildings Endpoint</button>
+    <div id="results"></div>
+
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                console.log('Fetching from: http://localhost:8080/api/admin/buildings/pending');
+                const response = await fetch('http://localhost:8080/api/admin/buildings/pending');
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Data received:', data);
+                    
+                    resultsDiv.innerHTML = `
+                        <h2>SUCCESS!</h2>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Number of buildings:</strong> ${data.length}</p>
+                        <h3>Raw Data:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <h2>API Error</h2>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Status Text:</strong> ${response.statusText}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                resultsDiv.innerHTML = `
+                    <h2>Network Error</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

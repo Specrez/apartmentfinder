@@ -26,52 +26,59 @@ const Login = ({ setUser }) => {
     }, 100)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
-    // Demo login logic - replace with actual authentication
-    if (formData.email && formData.password) {
-      // Simulate different user roles based on email
-      let userRole = 'user'
-      let userName = 'User'
-
-      if (formData.email.includes('admin')) {
-        userRole = 'admin'
-        userName = 'Admin'
-      } else if (formData.email.includes('owner')) {
-        userRole = 'owner'
-        userName = 'Owner'
-      } else if (formData.email.includes('employee')) {
-        userRole = 'employee'
-        userName = 'Employee'
-      }
-
-      const user = {
-        id: 1,
-        name: userName,
-        email: formData.email,
-        role: userRole
-      }
-
-      setUser(user)
-      
-      // Navigate to appropriate dashboard
-      switch (userRole) {
-        case 'admin':
-          navigate('/admin')
-          break
-        case 'owner':
-          navigate('/owner')
-          break
-        case 'employee':
-          navigate('/employee')
-          break
-        default:
-          navigate('/user')
-      }
-    } else {
+    if (!formData.email || !formData.password) {
       setError('Please fill in all fields')
+      return
+    }
+
+    try {
+      // Make API call to backend for authentication
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        
+        // Store token and user data
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('user', JSON.stringify(data.user))
+        
+        // Set user in parent component
+        setUser(data.user)
+        
+        // Navigate to appropriate dashboard based on role
+        switch (data.user.role) {
+          case 'admin':
+            navigate('/admin')
+            break
+          case 'owner':
+            navigate('/owner')
+            break
+          case 'employee':
+            navigate('/employee')
+            break
+          default:
+            navigate('/user')
+        }
+      } else {
+        const errorData = await response.text()
+        setError(errorData || 'Login failed')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      setError('Network error. Please try again.')
     }
   }
 
@@ -125,31 +132,25 @@ const Login = ({ setUser }) => {
           </div>
 
           <div className="demo-accounts">
-            <h3>Demo Accounts</h3>
+            <h3>Test Accounts</h3>
             <div className="demo-list">
               <div 
                 className="demo-item"
-                onClick={() => handleDemoLogin('admin@example.com', 'password')}
+                onClick={() => handleDemoLogin('oshadha.dw@gmail.com', 'password123')}
               >
-                <strong>Admin:</strong> admin@example.com / password
+                <strong>User:</strong> oshadha.dw@gmail.com / password123
               </div>
               <div 
                 className="demo-item"
-                onClick={() => handleDemoLogin('owner@example.com', 'password')}
+                onClick={() => handleDemoLogin('nalan@gmail.com', 'password123')}
               >
-                <strong>Owner:</strong> owner@example.com / password
+                <strong>Owner (Approved):</strong> nalan@gmail.com / password123
               </div>
               <div 
                 className="demo-item"
-                onClick={() => handleDemoLogin('employee@example.com', 'password')}
+                onClick={() => handleDemoLogin('kavishka@gmail.com', 'password123')}
               >
-                <strong>Employee:</strong> employee@example.com / password
-              </div>
-              <div 
-                className="demo-item"
-                onClick={() => handleDemoLogin('user@example.com', 'password')}
-              >
-                <strong>User:</strong> user@example.com / password
+                <strong>Owner (Pending):</strong> kavishka@gmail.com / password123
               </div>
             </div>
           </div>

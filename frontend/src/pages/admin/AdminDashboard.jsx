@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './AdminDashboard.css'
 
 const AdminDashboard = () => {
@@ -6,91 +6,166 @@ const AdminDashboard = () => {
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
   
-  // Sample pending registrations
-  const [pendingOwners] = useState([
-    {
-      id: 1,
-      name: "John Smith",
-      email: "john.smith@example.com",
-      businessName: "Smith Properties LLC",
-      businessLicense: "BL123456",
-      phone: "+1-555-0123",
-      address: "123 Business Ave, City, State",
-      submittedDate: "2025-08-18"
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      email: "sarah.johnson@realty.com",
-      businessName: "Johnson Real Estate",
-      businessLicense: "BL789012",
-      phone: "+1-555-0456",
-      address: "456 Commercial St, City, State",
-      submittedDate: "2025-08-19"
-    }
-  ])
+  // State for pending registrations - fetched from backend
+  const [pendingOwners, setPendingOwners] = useState([])
+  const [pendingBuildings, setPendingBuildings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const [pendingBuildings] = useState([
-    {
-      id: 1,
-      buildingName: "Sunset Tower",
-      ownerName: "John Smith",
-      ownerEmail: "john.smith@example.com",
-      address: "789 Sunset Blvd, Downtown",
-      totalUnits: 24,
-      yearBuilt: 2015,
-      amenities: ["Parking", "Gym", "Pool", "24/7 Security"],
-      submittedDate: "2025-08-19",
-      photos: [
-        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=400&h=300&fit=crop"
-      ]
-    },
-    {
-      id: 2,
-      buildingName: "Green Valley Apartments",
-      ownerName: "Sarah Johnson",
-      ownerEmail: "sarah.johnson@realty.com",
-      address: "321 Green Valley Rd, Suburbs",
-      totalUnits: 18,
-      yearBuilt: 2018,
-      amenities: ["Parking", "Garden", "Playground"],
-      submittedDate: "2025-08-20",
-      photos: [
-        "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400&h=300&fit=crop"
-      ]
-    }
-  ])
-
-  const [stats] = useState({
-    totalUsers: 156,
-    totalOwners: 23,
-    totalEmployees: 67,
-    totalBuildings: 45,
-    pendingOwnerApprovals: pendingOwners.length,
-    pendingBuildingApprovals: pendingBuildings.length
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalOwners: 0,
+    totalEmployees: 0,
+    totalBuildings: 0,
+    pendingOwnerApprovals: 0,
+    pendingBuildingApprovals: 0
   })
 
-  const handleApproveOwner = (ownerId) => {
-    console.log('Approving owner:', ownerId)
-    alert('Owner approved successfully!')
+  // Fetch data from backend on component mount
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      setError('')
+      
+      console.log('🔄 Fetching dashboard data...')
+      
+      // Fetch pending owners
+      const ownersResponse = await fetch('http://localhost:8080/api/admin/owners/pending')
+      if (ownersResponse.ok) {
+        const ownersData = await ownersResponse.json()
+        console.log('👥 Owners data:', ownersData)
+        setPendingOwners(ownersData)
+      }
+
+      // Fetch pending buildings
+      const buildingsResponse = await fetch('http://localhost:8080/api/admin/buildings/pending')
+      console.log('🏢 Buildings response status:', buildingsResponse.status)
+      if (buildingsResponse.ok) {
+        const buildingsData = await buildingsResponse.json()
+        console.log('🏢 Buildings data:', buildingsData)
+        console.log('🏢 Number of buildings:', buildingsData.length)
+        if (buildingsData.length > 0) {
+          console.log('🏢 First building structure:', buildingsData[0])
+        }
+        setPendingBuildings(buildingsData)
+      } else {
+        console.error('🏢 Buildings API failed:', buildingsResponse.status)
+      }
+
+      // Fetch dashboard stats
+      const statsResponse = await fetch('http://localhost:8080/api/admin/dashboard/stats')
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        console.log('📊 Stats data:', statsData)
+        setStats(statsData)
+      }
+
+    } catch (error) {
+      console.error('❌ Error fetching dashboard data:', error)
+      setError('Failed to load dashboard data')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleRejectOwner = (ownerId) => {
-    console.log('Rejecting owner:', ownerId)
-    alert('Owner registration rejected')
+  const handleApproveOwner = async (ownerId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/admin/owners/${ownerId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      if (response.ok) {
+        alert('Owner approved successfully!')
+        // Remove the approved owner from the pending list
+        setPendingOwners(pendingOwners.filter(owner => owner.id !== ownerId))
+        // Refresh stats
+        fetchDashboardData()
+      } else {
+        alert('Failed to approve owner')
+      }
+    } catch (error) {
+      console.error('Error approving owner:', error)
+      alert('Error approving owner')
+    }
   }
 
-  const handleApproveBuilding = (buildingId) => {
-    console.log('Approving building:', buildingId)
-    alert('Building approved successfully!')
+  const handleRejectOwner = async (ownerId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/admin/owners/${ownerId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      if (response.ok) {
+        alert('Owner registration rejected')
+        // Remove the rejected owner from the pending list
+        setPendingOwners(pendingOwners.filter(owner => owner.id !== ownerId))
+        // Refresh stats
+        fetchDashboardData()
+      } else {
+        alert('Failed to reject owner')
+      }
+    } catch (error) {
+      console.error('Error rejecting owner:', error)
+      alert('Error rejecting owner')
+    }
   }
 
-  const handleRejectBuilding = (buildingId) => {
-    console.log('Rejecting building:', buildingId)
-    alert('Building registration rejected')
+  const handleApproveBuilding = async (buildingId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/admin/buildings/${buildingId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      if (response.ok) {
+        alert('Building approved successfully!')
+        // Remove the approved building from the pending list
+        setPendingBuildings(pendingBuildings.filter(building => building.id !== buildingId))
+        // Refresh stats
+        fetchDashboardData()
+      } else {
+        alert('Failed to approve building')
+      }
+    } catch (error) {
+      console.error('Error approving building:', error)
+      alert('Error approving building')
+    }
+  }
+
+  const handleRejectBuilding = async (buildingId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/admin/buildings/${buildingId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      if (response.ok) {
+        alert('Building registration rejected')
+        // Remove the rejected building from the pending list
+        setPendingBuildings(pendingBuildings.filter(building => building.id !== buildingId))
+        // Refresh stats
+        fetchDashboardData()
+      } else {
+        alert('Failed to reject building')
+      }
+    } catch (error) {
+      console.error('Error rejecting building:', error)
+      alert('Error rejecting building')
+    }
   }
 
   const handlePhotoClick = (photo) => {
@@ -141,154 +216,203 @@ const AdminDashboard = () => {
               <p>Buildings</p>
             </div>
           </div>
+          <div className="stat-card">
+            <div className="stat-icon">⏳</div>
+            <div className="stat-info">
+              <h3>{stats.pendingOwnerApprovals}</h3>
+              <p>Pending Owner Approvals</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">🏗️</div>
+            <div className="stat-info">
+              <h3>{stats.pendingBuildingApprovals}</h3>
+              <p>Pending Building Approvals</p>
+            </div>
+          </div>
         </div>
 
-        {/* Pending Approvals */}
-        <div className="pending-section">
+        {/* Approval Tabs */}
+        <div className="approvals-section">
           <div className="section-header">
             <h2>Pending Approvals</h2>
-            <div className="tabs">
+            <div className="tab-navigation">
               <button 
                 className={`tab ${activeTab === 'owners' ? 'active' : ''}`}
                 onClick={() => setActiveTab('owners')}
               >
-                Owner Registrations ({stats.pendingOwnerApprovals})
+                Owner Registrations ({stats.pendingOwnerApprovals || 0})
               </button>
               <button 
                 className={`tab ${activeTab === 'buildings' ? 'active' : ''}`}
                 onClick={() => setActiveTab('buildings')}
               >
-                Building Registrations ({stats.pendingBuildingApprovals})
+                Building Registrations ({stats.pendingBuildingApprovals || 0})
               </button>
             </div>
           </div>
 
           {activeTab === 'owners' && (
             <div className="approvals-list">
-              {pendingOwners.map(owner => (
-                <div key={owner.id} className="approval-card">
-                  <div className="approval-header">
-                    <h3>{owner.name}</h3>
-                    <span className="submission-date">Submitted: {owner.submittedDate}</span>
+              {loading ? (
+                <div className="loading-message">Loading pending owners...</div>
+              ) : error ? (
+                <div className="error-message">{error}</div>
+              ) : pendingOwners.length === 0 ? (
+                <div className="no-data-message">No pending owner registrations</div>
+              ) : (
+                pendingOwners.map(owner => (
+                  <div key={owner.id} className="approval-card">
+                    <div className="approval-header">
+                      <h3>{owner.name}</h3>
+                      <span className="submission-date">Submitted: {new Date(owner.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="approval-details">
+                      <div className="detail-row">
+                        <span className="label">Email:</span>
+                        <span>{owner.email}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span className="label">Business Name:</span>
+                        <span>{owner.businessName || 'N/A'}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span className="label">License:</span>
+                        <span>{owner.businessLicense || 'N/A'}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span className="label">Phone:</span>
+                        <span>{owner.phoneNumber || 'N/A'}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span className="label">Address:</span>
+                        <span>{owner.address || 'N/A'}</span>
+                      </div>
+                    </div>
+                    <div className="approval-actions">
+                      <button 
+                        className="btn btn-success"
+                        onClick={() => handleApproveOwner(owner.id)}
+                      >
+                        Approve
+                      </button>
+                      <button 
+                        className="btn btn-danger"
+                        onClick={() => handleRejectOwner(owner.id)}
+                      >
+                        Reject
+                      </button>
+                    </div>
                   </div>
-                  <div className="approval-details">
-                    <div className="detail-row">
-                      <span className="label">Email:</span>
-                      <span>{owner.email}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Business Name:</span>
-                      <span>{owner.businessName}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">License:</span>
-                      <span>{owner.businessLicense}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Phone:</span>
-                      <span>{owner.phone}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Address:</span>
-                      <span>{owner.address}</span>
-                    </div>
-                  </div>
-                  <div className="approval-actions">
-                    <button 
-                      className="btn btn-success"
-                      onClick={() => handleApproveOwner(owner.id)}
-                    >
-                      Approve
-                    </button>
-                    <button 
-                      className="btn btn-danger"
-                      onClick={() => handleRejectOwner(owner.id)}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
           {activeTab === 'buildings' && (
             <div className="approvals-list">
-              {pendingBuildings.map(building => (
-                <div key={building.id} className="approval-card">
-                  <div className="approval-header">
-                    <h3>{building.buildingName}</h3>
-                    <span className="submission-date">Submitted: {building.submittedDate}</span>
+              {loading ? (
+                <div className="loading-message">Loading pending buildings...</div>
+              ) : error ? (
+                <div className="error-message">{error}</div>
+              ) : pendingBuildings.length === 0 ? (
+                <div className="no-data-message">No pending building registrations</div>
+              ) : (
+                <>
+                  <div style={{padding: '10px', backgroundColor: '#f0f8ff', margin: '10px 0'}}>
+                    <strong>DEBUG INFO:</strong><br/>
+                    Loading: {loading.toString()}<br/>
+                    Error: {error || 'none'}<br/>
+                    Buildings count: {pendingBuildings.length}<br/>
+                    Active tab: {activeTab}
                   </div>
-                  <div className="approval-details">
-                    <div className="detail-row">
-                      <span className="label">Owner:</span>
-                      <span>{building.ownerName} ({building.ownerEmail})</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Address:</span>
-                      <span>{building.address}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Total Units:</span>
-                      <span>{building.totalUnits}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Year Built:</span>
-                      <span>{building.yearBuilt}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Amenities:</span>
-                      <span>{building.amenities.join(', ')}</span>
-                    </div>
-                    {building.photos && building.photos.length > 0 && (
-                      <div className="detail-row">
-                        <span className="label">Building Photos:</span>
-                        <div className="building-photos">
-                          {building.photos.map((photo, index) => (
-                            <div key={index} className="photo-container">
-                              <img 
-                                src={photo} 
-                                alt={`${building.buildingName} - Photo ${index + 1}`}
-                                className="building-photo"
-                                onClick={() => handlePhotoClick(photo)}
-                              />
-                            </div>
-                          ))}
-                        </div>
+                  {pendingBuildings.map(building => (
+                    <div key={building.id} className="approval-card">
+                      <div className="approval-header">
+                        <h3>{building.buildingName || building.building_name || 'No Name'}</h3>
+                        <span className="submission-date">Submitted: {new Date(building.createdAt || building.created_at).toLocaleDateString()}</span>
                       </div>
-                    )}
-                  </div>
-                  <div className="approval-actions">
-                    <button 
-                      className="btn btn-success"
-                      onClick={() => handleApproveBuilding(building.id)}
-                    >
-                      Approve
-                    </button>
-                    <button 
-                      className="btn btn-danger"
-                      onClick={() => handleRejectBuilding(building.id)}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              ))}
+                      <div className="approval-details">
+                        <div className="detail-row">
+                          <span className="label">Address:</span>
+                          <span>{building.address}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="label">District:</span>
+                          <span>{building.district}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="label">City:</span>
+                          <span>{building.city}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="label">Total Units:</span>
+                          <span>{building.totalUnits || building.total_units}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="label">Year Built:</span>
+                          <span>{building.yearBuilt || building.year_built || 'N/A'}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="label">Description:</span>
+                          <span>{building.description || 'N/A'}</span>
+                        </div>
+                        {building.amenities && (
+                          <div className="detail-row">
+                            <span className="label">Amenities:</span>
+                            <span>{Array.isArray(building.amenities) ? building.amenities.join(', ') : building.amenities}</span>
+                          </div>
+                        )}
+                        {building.photos && building.photos.length > 0 && (
+                          <div className="detail-row">
+                            <span className="label">Building Photos:</span>
+                            <div className="building-photos">
+                              {building.photos.map((photo, index) => (
+                                <div key={index} className="photo-container">
+                                  <img 
+                                    src={photo} 
+                                    alt={`${building.buildingName || building.building_name} - Photo ${index + 1}`}
+                                    className="building-photo"
+                                    onClick={() => handlePhotoClick(photo)}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="approval-actions">
+                        <button 
+                          className="btn btn-success"
+                          onClick={() => handleApproveBuilding(building.id)}
+                        >
+                          Approve
+                        </button>
+                        <button 
+                          className="btn btn-danger"
+                          onClick={() => handleRejectBuilding(building.id)}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           )}
         </div>
-      </div>
 
-      {/* Photo Modal */}
-      {isPhotoModalOpen && (
-        <div className="photo-modal" onClick={closePhotoModal}>
-          <div className="photo-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" onClick={closePhotoModal}>×</button>
-            <img src={selectedPhoto} alt="Building Photo" className="modal-photo" />
+        {/* Photo Modal */}
+        {isPhotoModalOpen && (
+          <div className="photo-modal" onClick={closePhotoModal}>
+            <div className="photo-modal-content" onClick={(e) => e.stopPropagation()}>
+              <span className="close-button" onClick={closePhotoModal}>&times;</span>
+              <img src={selectedPhoto} alt="Building" className="modal-photo" />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

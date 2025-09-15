@@ -33,7 +33,7 @@ const Register = () => {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -48,10 +48,59 @@ const Register = () => {
       return
     }
 
-    // Simulate registration
-    console.log('Registration data:', formData)
-    alert(`Registration submitted for ${formData.role}. Please wait for admin approval.`)
-    navigate('/login')
+    try {
+      let response
+      let endpoint
+      let requestData
+
+      if (formData.role === 'user') {
+        // User registration - immediate registration
+        endpoint = 'http://localhost:8080/api/auth/register/user'
+        requestData = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          phoneNumber: formData.phone,
+          address: formData.address
+        }
+      } else if (formData.role === 'owner') {
+        // Owner registration - requires admin approval
+        endpoint = 'http://localhost:8080/api/auth/register/owner'
+        requestData = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          phoneNumber: formData.phone,
+          address: formData.address,
+          businessName: formData.businessName,
+          businessLicense: formData.businessLicense
+        }
+      }
+
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        if (formData.role === 'user') {
+          alert('User registered successfully! You can now login.')
+        } else {
+          alert('Owner registration submitted for admin approval.')
+        }
+        navigate('/login')
+      } else {
+        setError(data.message || data || 'Registration failed')
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+      setError('Network error. Please try again.')
+    }
   }
 
   if (step === 1) {

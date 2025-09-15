@@ -11,6 +11,7 @@ import UserDashboard from './pages/user/UserDashboard'
 import ApartmentDetails from './pages/ApartmentDetails'
 import SavedAds from './pages/user/SavedAds'
 import Profile from './pages/Profile'
+import SimpleAdminTest from './SimpleAdminTest'
 import './App.css'
 
 function App() {
@@ -61,6 +62,9 @@ function App() {
             <Route path="/login" element={<Login setUser={setUser} />} />
             <Route path="/register" element={<Register />} />
             <Route path="/apartment/:id" element={<ApartmentDetails user={user} />} />
+            
+            {/* Test Route */}
+            <Route path="/test" element={<SimpleAdminTest />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={

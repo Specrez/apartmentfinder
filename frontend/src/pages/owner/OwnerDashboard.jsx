@@ -4,66 +4,18 @@ import './OwnerDashboard.css'
 const OwnerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview')
   
-  // Sample data
-  const [buildings] = useState([
-    {
-      id: 1,
-      name: "Sunset Tower",
-      address: "789 Sunset Blvd, Downtown",
-      totalUnits: 24,
-      occupiedUnits: 19,
-      employees: 3,
-      status: "approved",
-      image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=300&h=200&fit=crop"
-    },
-    {
-      id: 2,
-      name: "Ocean View Apartments",
-      address: "456 Ocean Drive, Beachside",
-      totalUnits: 18,
-      occupiedUnits: 15,
-      employees: 2,
-      status: "pending",
-      image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=300&h=200&fit=crop"
-    }
-  ])
-
-  const [employees] = useState([
-    {
-      id: 1,
-      name: "Alice Johnson",
-      email: "alice@example.com",
-      buildingId: 1,
-      buildingName: "Sunset Tower",
-      position: "Property Manager",
-      joinDate: "2025-01-15"
-    },
-    {
-      id: 2,
-      name: "Bob Wilson",
-      email: "bob@example.com",
-      buildingId: 1,
-      buildingName: "Sunset Tower",
-      position: "Maintenance Staff",
-      joinDate: "2025-02-01"
-    },
-    {
-      id: 3,
-      name: "Carol Davis",
-      email: "carol@example.com",
-      buildingId: 2,
-      buildingName: "Ocean View Apartments",
-      position: "Leasing Agent",
-      joinDate: "2025-03-10"
-    }
-  ])
+  // Sample data - Will be fetched from backend
+  const [buildings, setBuildings] = useState([])
+  const [employees, setEmployees] = useState([])
 
   const [showAddBuildingForm, setShowAddBuildingForm] = useState(false)
   const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false)
 
   const [newBuilding, setNewBuilding] = useState({
-    name: '',
+    buildingName: '',
     address: '',
+    district: '',
+    city: '',
     totalUnits: '',
     yearBuilt: '',
     amenities: [],
@@ -83,20 +35,59 @@ const OwnerDashboard = () => {
     '24/7 Security', 'Elevator', 'Laundry', 'WiFi', 'Air Conditioning'
   ]
 
-  const handleAddBuilding = (e) => {
+  const handleAddBuilding = async (e) => {
     e.preventDefault()
-    console.log('Adding building:', newBuilding)
-    alert('Building registration submitted for admin approval!')
-    setShowAddBuildingForm(false)
-    setNewBuilding({
-      name: '',
-      address: '',
-      totalUnits: '',
-      yearBuilt: '',
-      amenities: [],
-      description: '',
-      image: null
-    })
+    
+    try {
+      // For now, using a demo owner ID - in real app, this would come from auth context
+      const ownerId = 1; // This should be the logged-in owner's ID
+      
+      // Convert amenities array to JSON string format expected by backend
+      const buildingData = {
+        buildingName: newBuilding.buildingName,
+        address: newBuilding.address,
+        district: newBuilding.district,
+        city: newBuilding.city,
+        totalUnits: parseInt(newBuilding.totalUnits),
+        yearBuilt: parseInt(newBuilding.yearBuilt),
+        description: newBuilding.description,
+        amenities: JSON.stringify(newBuilding.amenities), // Convert to JSON string
+        photos: JSON.stringify([]) // Empty photos for now
+      };
+
+      console.log('Submitting building:', buildingData);
+
+      const response = await fetch(`http://localhost:8080/api/buildings/submit?ownerId=${ownerId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(buildingData)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Building registration submitted for admin approval successfully!');
+        setShowAddBuildingForm(false);
+        setNewBuilding({
+          buildingName: '',
+          address: '',
+          district: '',
+          city: '',
+          totalUnits: '',
+          yearBuilt: '',
+          amenities: [],
+          description: '',
+          image: null
+        });
+      } else {
+        alert(`Error: ${result.error || 'Failed to submit building'}`);
+      }
+    } catch (error) {
+      console.error('Error submitting building:', error);
+      alert('Network error: Could not submit building registration');
+    }
   }
 
   const handleAddEmployee = (e) => {
@@ -315,8 +306,8 @@ const OwnerDashboard = () => {
                     <input
                       type="text"
                       className="form-control"
-                      value={newBuilding.name}
-                      onChange={(e) => setNewBuilding({...newBuilding, name: e.target.value})}
+                      value={newBuilding.buildingName}
+                      onChange={(e) => setNewBuilding({...newBuilding, buildingName: e.target.value})}
                       required
                     />
                   </div>
@@ -327,6 +318,29 @@ const OwnerDashboard = () => {
                       className="form-control"
                       value={newBuilding.address}
                       onChange={(e) => setNewBuilding({...newBuilding, address: e.target.value})}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>District</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={newBuilding.district}
+                      onChange={(e) => setNewBuilding({...newBuilding, district: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>City</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={newBuilding.city}
+                      onChange={(e) => setNewBuilding({...newBuilding, city: e.target.value})}
                       required
                     />
                   </div>
